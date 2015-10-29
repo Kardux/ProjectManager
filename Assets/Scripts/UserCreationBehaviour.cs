@@ -147,6 +147,7 @@ public class UserCreationBehaviour : MonoBehaviour
     public void CheckButton()
     {
         m_CheckButton.SetActive(false);
+        m_ContinueButton.SetActive(false);
         if (m_Step == 1)
         {
             m_PasscodeMessageText.color = new Color(0.165f, 0.165f, 0.949f);
@@ -158,12 +159,14 @@ public class UserCreationBehaviour : MonoBehaviour
 
     public void ContinueButton()
     {
+        m_CheckButton.SetActive(false);
         m_ContinueButton.SetActive(false);
         if (m_Step == 0)
         {
             m_CheckButton.SetActive(false);
             m_ContinueButton.SetActive(false);
             m_UsernameChoosed = m_UsernameInputField.text;
+            m_UsernameInputField.interactable = false;
             StartCoroutine(ChangeStepCoroutine(m_Step + 1));
         }
         else if (m_Step == 1)

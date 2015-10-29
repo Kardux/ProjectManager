@@ -155,12 +155,34 @@ public class MenuController : MonoBehaviour
                         yield return new WaitForEndOfFrame();
                     }
 
-                    MessageBoxBehaviour.INSTANCE.SetMessageTest("Wrong password or username provided please try again (or create your account if necessary).");
+                    MessageBoxBehaviour.INSTANCE.SetMessageText("Wrong password or username provided please try again (or create your account if necessary).");
                     while (MessageBoxBehaviour.INSTANCE.IsDisplayed())
                     {
                         yield return new WaitForEndOfFrame();
                     }
                 }
+                break;
+
+            case 4 :
+                //To Todos page
+                m_LoadingCanvas.FadeIn();
+                while (m_LoadingCanvas.IsFading())
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+
+                string[] _TodosToAdd = TodoCreationBehaviour.INSTANCE.GetTodosToAdd();
+                if (_TodosToAdd != null)
+                {
+                    for (int i = 0; i < _TodosToAdd.Length; i ++)
+                    {
+                        StartCoroutine(MySQLWrapper.INSTANCE.SetTodoCoroutine(_TodosToAdd[i]));
+                    }
+                }
+
+                StartCoroutine(MySQLWrapper.INSTANCE.GetTodosCoroutine());
+
+                m_MenuIndex = Index;
                 break;
 
             default :
@@ -180,6 +202,11 @@ public class MenuController : MonoBehaviour
         }
 
         m_Canvas[m_MenuIndex].FadeIn();
+    }
+
+    public CustomCanvasGroup GetLoadingCanvas()
+    {
+        return m_LoadingCanvas;
     }
 	//////////////////////////////////////////////////////////////////////////
 	#endregion

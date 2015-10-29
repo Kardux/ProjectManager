@@ -17,21 +17,18 @@ Cette oeuvre est mise a disposition selon les termes de la Licence Creative Comm
 
 using UnityEngine;
 using System.Collections;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 //////////////////////////////////////////////////////////////////////////
 //CLASS
 //////////////////////////////////////////////////////////////////////////
-public class MessageBoxBehaviour : MonoBehaviour
+public class PointerHoveringIndicator : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
-
-    public static MessageBoxBehaviour INSTANCE;
 	#region Variables
 	//////////////////////////////////////////////////////////////////////////
 	//VARIABLES
 	//////////////////////////////////////////////////////////////////////////
-    [SerializeField]
-    private Text m_MessageText;
+    private bool m_Hovered;
 	//////////////////////////////////////////////////////////////////////////
 	#endregion
 
@@ -41,11 +38,20 @@ public class MessageBoxBehaviour : MonoBehaviour
 	//////////////////////////////////////////////////////////////////////////
 	void Start()
 	{
-        INSTANCE = this;
-        GetComponent<CanvasGroup>().alpha = 0.0f;
-        GetComponent<CanvasGroup>().interactable = false;
-        GetComponent<CanvasGroup>().blocksRaycasts = false;
+        m_Hovered = false;
 	}
+
+    public void OnPointerEnter(PointerEventData dataName)
+	{
+        Debug.Log("Enter");
+        m_Hovered = true;
+	}
+
+    public void OnPointerExit(PointerEventData dataName)
+    {
+        Debug.Log("Exit");
+        m_Hovered = false;
+    }
 	//////////////////////////////////////////////////////////////////////////
 	#endregion
 
@@ -53,25 +59,9 @@ public class MessageBoxBehaviour : MonoBehaviour
 	//////////////////////////////////////////////////////////////////////////
 	//METHODS
 	//////////////////////////////////////////////////////////////////////////
-    public void SetMessageTest(string Message)
+    public bool IsHovered()
     {
-        m_MessageText.text = Message;
-        GetComponent<CanvasGroup>().alpha = 1.0f;
-        GetComponent<CanvasGroup>().interactable = true;
-        GetComponent<CanvasGroup>().blocksRaycasts = true;
-    }
-
-    public void Validate()
-    {
-        m_MessageText.text = "";
-        GetComponent<CanvasGroup>().alpha = 0.0f;
-        GetComponent<CanvasGroup>().interactable = false;
-        GetComponent<CanvasGroup>().blocksRaycasts = false;
-    }
-
-    public bool IsDisplayed()
-    {
-        return GetComponent<CanvasGroup>().interactable;
+        return m_Hovered;
     }
 	//////////////////////////////////////////////////////////////////////////
 	#endregion

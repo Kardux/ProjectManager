@@ -17,6 +17,8 @@ Cette oeuvre est mise a disposition selon les termes de la Licence Creative Comm
 
 using UnityEngine;
 using System.Collections;
+using System.Xml;
+using System.Collections.Generic;
 
 //////////////////////////////////////////////////////////////////////////
 //CLASS
@@ -60,6 +62,8 @@ public class MySQLWrapper : MonoBehaviour
     private UserState m_UserState;
     private string m_Username;
     private string m_UserMD5;
+
+    private bool m_QueryRunning;
 	//////////////////////////////////////////////////////////////////////////
 	#endregion
 
@@ -73,6 +77,8 @@ public class MySQLWrapper : MonoBehaviour
         m_UserState = UserState.Disconnected;
         m_Username = "";
         m_UserMD5 = "";
+
+        m_QueryRunning = false;
 	}
 	//////////////////////////////////////////////////////////////////////////
 	#endregion
@@ -96,7 +102,10 @@ public class MySQLWrapper : MonoBehaviour
         StartCoroutine(CheckUserCoroutine(Username, Password));
     }
 
-    //TODO all coroutine accessers
+    public bool IsQueryRunning()
+    {
+        return m_QueryRunning;
+    }
 
     public void ClearData()
     {
@@ -107,6 +116,12 @@ public class MySQLWrapper : MonoBehaviour
 
     public IEnumerator UsernameAvailabilityCoroutine(string Username, System.Action<bool> Callback)
     {
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
+
         string _PostURL = m_UsernameAvailabilityURL + "Username=" + WWW.EscapeURL(Username);
 
         WWW _WWW = new WWW(_PostURL);
@@ -128,10 +143,18 @@ public class MySQLWrapper : MonoBehaviour
                 Callback(false);
             }
         }
+
+        m_QueryRunning = false;
     }
 
     public IEnumerator CreateUserCoroutine(string Username, string Passcode)
     {
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
+
         string _CheckHash = Md5Sum(Md5Sum(Username + Passcode) + m_SecretKey);
 
         string _PostURL = m_CreateUserURL + "Username=" + WWW.EscapeURL(Username) + "&UserMD5=" + WWW.EscapeURL(Md5Sum(Username + Passcode)) + "&CheckHash=" + _CheckHash;
@@ -141,16 +164,24 @@ public class MySQLWrapper : MonoBehaviour
 
         if (_WWW.error != null)
         {
-            MessageBoxBehaviour.INSTANCE.SetMessageTest("Error creating user: please try again.");
+            MessageBoxBehaviour.INSTANCE.SetMessageText("Error creating user: please try again.");
         }
         else
         {
-            MessageBoxBehaviour.INSTANCE.SetMessageTest("User successfully created. You can now login to start using your own project manager.");
+            MessageBoxBehaviour.INSTANCE.SetMessageText("User successfully created. You can now login to start using your own project manager.");
         }
+
+        m_QueryRunning = false;
     }
 
     private IEnumerator CheckUserCoroutine(string Username, string Passcode)
     {
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
+
         m_Username = Username;
         m_UserMD5 = Md5Sum(Username + Passcode);
 
@@ -179,11 +210,19 @@ public class MySQLWrapper : MonoBehaviour
                 m_UserState = UserState.Unknown;
             }
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator GetProjectsCoroutine(string UserMD5)
+    private IEnumerator GetProjectsCoroutine()
     {
-        string _PostURL = m_GetProjectsURL + "UserMD5=" + WWW.EscapeURL(UserMD5);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
+
+        string _PostURL = m_GetProjectsURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5);
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
@@ -196,13 +235,21 @@ public class MySQLWrapper : MonoBehaviour
         {
             Debug.Log(_WWW.text);
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator SetProjectCoroutine(string UserMD5, string Name, System.DateTime StartDate, int TimeUntits)
+    private IEnumerator SetProjectCoroutine(string Name, System.DateTime StartDate, int TimeUntits)
     {
-        string _CheckHash = Md5Sum(UserMD5 + m_SecretKey);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
 
-        string _PostURL = m_SetProjectURL + "UserMD5=" + WWW.EscapeURL(UserMD5) + "&Name=" + WWW.EscapeURL(Name) + "&StartDate=" + WWW.EscapeURL(StartDate.ToString("yyyy-MM-dd")) + "&TimeUnits=" + WWW.EscapeURL(TimeUntits.ToString()) + "&CheckHash=" + _CheckHash;
+        string _CheckHash = Md5Sum(m_UserMD5 + m_SecretKey);
+
+        string _PostURL = m_SetProjectURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5) + "&Name=" + WWW.EscapeURL(Name) + "&StartDate=" + WWW.EscapeURL(StartDate.ToString("yyyy-MM-dd")) + "&TimeUnits=" + WWW.EscapeURL(TimeUntits.ToString()) + "&CheckHash=" + _CheckHash;
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
@@ -215,13 +262,21 @@ public class MySQLWrapper : MonoBehaviour
         {
             Debug.Log("Project successfully added.");
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator DeleteProjectCoroutine(string UserMD5, int ID)
+    private IEnumerator DeleteProjectCoroutine(int ID)
     {
-        string _CheckHash = Md5Sum(UserMD5 + m_SecretKey);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
 
-        string _PostURL = m_DeleteProjectURL + "UserMD5=" + WWW.EscapeURL(UserMD5) + "&ID=" + WWW.EscapeURL(ID.ToString()) + "&CheckHash=" + _CheckHash;
+        string _CheckHash = Md5Sum(m_UserMD5 + m_SecretKey);
+
+        string _PostURL = m_DeleteProjectURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5) + "&ID=" + WWW.EscapeURL(ID.ToString()) + "&CheckHash=" + _CheckHash;
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
@@ -234,30 +289,63 @@ public class MySQLWrapper : MonoBehaviour
         {
             Debug.Log("Project successfully deleted.\n" + _WWW.text);
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator GetTodosCoroutine(string UserMD5)
+    public IEnumerator GetTodosCoroutine()
     {
-        string _PostURL = m_GetTodosURL + "UserMD5=" + WWW.EscapeURL(UserMD5);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
+
+        string _PostURL = m_GetTodosURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5);
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
 
         if (_WWW.error != null)
         {
+            MessageBoxBehaviour.INSTANCE.SetMessageText("An error happend while retrieving elements.");
             Debug.LogError("Error while retrieving todos:\n" + _WWW.error);
         }
         else
         {
-            Debug.Log(_WWW.text);
+            //TODO
+            XmlDocument _XML = new XmlDocument();
+            _XML.LoadXml(_WWW.text);
+            
+            XmlNode _GlobalNode = _XML.SelectSingleNode("GET_TODOS_RESULTS");
+            XmlNodeList _TodosNodes = _GlobalNode.SelectNodes("TODO");
+
+            string[] _Todos = new string[_TodosNodes.Count];
+            int[] _IDs = new int[_TodosNodes.Count];
+
+            for (int i = 0; i < _TodosNodes.Count; i ++)
+            {
+                _Todos[i] = _TodosNodes.Item(i).SelectSingleNode("Name").InnerText;
+                int.TryParse(_TodosNodes.Item(i).SelectSingleNode("ID").InnerText, out _IDs[i]);
+            }
+
+            TodosListBehaviour.INSTANCE.Populate(_Todos, _IDs);
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator SetTodoCoroutine(string UserMD5, string Name)
+    public IEnumerator SetTodoCoroutine(string Name)
     {
-        string _CheckHash = Md5Sum(UserMD5 + m_SecretKey);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
 
-        string _PostURL = m_SetTodoURL + "UserMD5=" + WWW.EscapeURL(UserMD5) + "&Name=" + WWW.EscapeURL(Name) + "&CheckHash=" + _CheckHash;
+        string _CheckHash = Md5Sum(m_UserMD5 + m_SecretKey);
+
+        string _PostURL = m_SetTodoURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5) + "&Name=" + WWW.EscapeURL(Name) + "&CheckHash=" + _CheckHash;
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
@@ -270,25 +358,36 @@ public class MySQLWrapper : MonoBehaviour
         {
             Debug.Log("Todo successfully added.");
         }
+
+        m_QueryRunning = false;
     }
 
-    private IEnumerator DeleteTodoCoroutine(string UserMD5, int ID)
+    public IEnumerator DeleteTodoCoroutine(int ID)
     {
-        string _CheckHash = Md5Sum(UserMD5 + m_SecretKey);
+        while (m_QueryRunning)
+        {
+            yield return new WaitForEndOfFrame();
+        }
+        m_QueryRunning = true;
 
-        string _PostURL = m_DeleteTodoURL + "UserMD5=" + WWW.EscapeURL(UserMD5) + "&ID=" + WWW.EscapeURL(ID.ToString()) + "&CheckHash=" + _CheckHash;
+        string _CheckHash = Md5Sum(m_UserMD5 + m_SecretKey);
+
+        string _PostURL = m_DeleteTodoURL + "UserMD5=" + WWW.EscapeURL(m_UserMD5) + "&ID=" + WWW.EscapeURL(ID.ToString()) + "&CheckHash=" + _CheckHash;
 
         WWW _WWW = new WWW(_PostURL);
         yield return _WWW;
 
         if (_WWW.error != null)
         {
+            MessageBoxBehaviour.INSTANCE.SetMessageText("An error happend while deleting element.");
             Debug.LogError("Error while deleting todo:\n" + _WWW.error);
         }
         else
         {
             Debug.Log("Todo successfully deleted.");
         }
+
+        m_QueryRunning = false;
     }
 
     //////////////////////////////////////////////////////////////////////////
