@@ -163,6 +163,31 @@ public class MenuController : MonoBehaviour
                 }
                 break;
 
+            case 3:
+                //To Calendar page
+                m_LoadingCanvas.FadeIn();
+                while (m_LoadingCanvas.IsFading())
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+
+                StartCoroutine(MySQLWrapper.INSTANCE.GetProjectsCoroutine());
+                while (MySQLWrapper.INSTANCE.IsQueryRunning())
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+
+                StartCoroutine(m_Canvas[Index].GetComponent<ProjectCalendarBehaviour>().BeginCalendar());
+                while (!m_Canvas[Index].GetComponent<ProjectCalendarBehaviour>().IsStarted())
+                {
+                    yield return new WaitForEndOfFrame();
+                }
+
+                m_Canvas[Index].GetComponent<ProjectCalendarBehaviour>().SetCalendar();
+
+                m_MenuIndex = Index;
+                break;
+
             case 4 :
                 //To Todos page
                 m_LoadingCanvas.FadeIn();

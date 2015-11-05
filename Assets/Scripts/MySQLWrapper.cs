@@ -214,7 +214,7 @@ public class MySQLWrapper : MonoBehaviour
         m_QueryRunning = false;
     }
 
-    private IEnumerator GetProjectsCoroutine()
+    public IEnumerator GetProjectsCoroutine()
     {
         while (m_QueryRunning)
         {
@@ -229,11 +229,31 @@ public class MySQLWrapper : MonoBehaviour
 
         if (_WWW.error != null)
         {
+            MessageBoxBehaviour.INSTANCE.SetMessageText("An error happend while retrieving projects.");
             Debug.LogError("Error while retrieving projects:\n" + _WWW.error);
         }
         else
         {
-            Debug.Log(_WWW.text);
+            XmlDocument _XML = new XmlDocument();
+            _XML.LoadXml(_WWW.text);
+
+            XmlNode _GlobalNode = _XML.SelectSingleNode("GET_PROJECTS_RESULTS");
+            XmlNodeList _ProjectsNodes = _GlobalNode.SelectNodes("PROJECT");
+
+            string[] _Projects = new string[_ProjectsNodes.Count];
+            string[] _StartDates = new string[_ProjectsNodes.Count];
+            int[] _TimeUnits = new int[_ProjectsNodes.Count];
+            int[] _IDs = new int[_ProjectsNodes.Count];
+
+            for (int i = 0; i < _ProjectsNodes.Count; i++)
+            {
+                _Projects[i] = _ProjectsNodes.Item(i).SelectSingleNode("Name").InnerText;
+                _StartDates[i] = _ProjectsNodes.Item(i).SelectSingleNode("StartDate").InnerText;
+                int.TryParse(_ProjectsNodes.Item(i).SelectSingleNode("TimeUnits").InnerText, out _TimeUnits[i]);
+                int.TryParse(_ProjectsNodes.Item(i).SelectSingleNode("ID").InnerText, out _IDs[i]);
+            }
+
+            ProjectCalendarBehaviour.INSTANCE.SetProjects(_Projects, _StartDates, _TimeUnits, _IDs);
         }
 
         m_QueryRunning = false;
@@ -313,7 +333,6 @@ public class MySQLWrapper : MonoBehaviour
         }
         else
         {
-            //TODO
             XmlDocument _XML = new XmlDocument();
             _XML.LoadXml(_WWW.text);
             
