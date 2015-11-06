@@ -48,6 +48,11 @@ public class ProjectCalendarBehaviour : MonoBehaviour
     [SerializeField]
     private CalendarDay[] m_Days;
 
+    [SerializeField]
+    private CanvasGroup m_ProjectsCaption;
+    [SerializeField]
+    private ProjectCaption[] m_ProjectCaptions;
+
     private bool m_Started;
 
     private int m_CurrentYear;
@@ -114,6 +119,14 @@ public class ProjectCalendarBehaviour : MonoBehaviour
             m_Projects[i].TimeUnits = TimeUnits[i];
             m_Projects[i].ID = IDs[i];
         }
+
+        for (int i = 0; i < m_ProjectCaptions.Length; i ++)
+        {
+            if (m_Projects.Length > i)
+                m_ProjectCaptions[i].SetTexts(m_Projects[i].Name, m_Projects[i].StartDate.Year.ToString() + "/" + m_Projects[i].StartDate.Month.ToString() + "/" + m_Projects[i].StartDate.Day.ToString(), m_Projects[i].TimeUnits.ToString());
+            else
+                m_ProjectCaptions[i].SetTexts(null, null, null);
+        }
     }
     
     public void SetCalendar()
@@ -171,6 +184,13 @@ public class ProjectCalendarBehaviour : MonoBehaviour
         }
 
         SetCalendar();
+    }
+
+    public void ShowCaption(bool OnOff)
+    {
+        m_ProjectsCaption.alpha = OnOff ? 1.0f : 0.0f;
+        m_ProjectsCaption.blocksRaycasts = OnOff;
+        m_ProjectsCaption.interactable = OnOff;
     }
 
     private bool IsDateInProject(DateTime DateToCheck, DateTime StartDate, int TimeUnits)
